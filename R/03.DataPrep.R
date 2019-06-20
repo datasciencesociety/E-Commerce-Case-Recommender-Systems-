@@ -59,14 +59,36 @@ Events <- Events %>%
   # mutate(year = year(timeEdited)) %>% # all is in 2015
   mutate(week = week(timeEdited))
 
+# tmp <- (Linked %>% select(itemid, categoryid,parentid)) #%>% 
+  # group_by(itemid) %>% 
+  # summarise(count = n())
+
 ComboSet <- Events %>% 
-  left_join(., Linked, by = c("itemid", "week")) %>% 
+  left_join(., 
+            (Linked %>% select(-categoryid, -parentid)), 
+            by = c("itemid", "week")) %>% 
   rename(timeEvents = timeEdited.x) %>% 
-  rename(timeItemCats = timeEdited.y)
+  rename(timeItemCats = timeEdited.y) %>% 
+  rename(timestampEvents = timestamp.x) %>% 
+  rename(timestampItemCats = timestamp.y) %>% 
+  left_join(., 
+            (Linked %>% select(itemid, categoryid,parentid)),
+            by = "itemid")
 
 write_csv(ComboSet, "Output/ComboSet.csv")
-  
 
+info <- infoNA(ComboSet)
+
+# Check how many unique item-cat-parent combos there are
+test <- ComboSet %>% 
+  group_by(itemid, categoryid, parentid) %>% 
+  summarise(count = n())
+test2 <- test %>% 
+  filter(is.na(categoryid) & is.na(parentid))  # items with no cat and parent
+
+
+
+# ------------------------------------------------------------------------------  
 # TestProp <- Items %>% 
 #   filter(property %in% c("categoryid", "available")) %>% 
 #   group_by(timestamp, itemid) %>% 
